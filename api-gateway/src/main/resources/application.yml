@@ -1,33 +1,31 @@
-server:
-  port: 8084
-
 spring:
   application:
     name: api-gateway
   config:
     import: "configserver:"
   cloud:
-    loadbalancer:
-      ribbon:
-        enabled: false
     config:
       uri: http://localhost:8080
     gateway:
       routes:
         - id: user
-          uri: lb://user
+          uri: lb://USER
           predicates:
             - Path=/api/users/**
         - id: movie
-          uri: lb://movie
+          uri: lb://MOVIE
           predicates:
             - Path=/api/movies/**
       discovery:
         locator:
           enabled: true
 
-
 eureka:
   client:
     service-url:
       defaultZone: http://localhost:8082/eureka
+  instance:
+    hostname: localhost
+
+server:
+  port: 8084
