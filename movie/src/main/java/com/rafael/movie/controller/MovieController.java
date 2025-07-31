@@ -1,9 +1,9 @@
 package com.rafael.movie.controller;
 
 import com.rafael.movie.entity.Movie;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.rafael.movie.service.interfaces.MovieService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -11,18 +11,36 @@ import java.util.List;
 @RequestMapping("/api/movies")
 public class MovieController {
 
+    private MovieService movieService;
 
-    List<String> movies = List.of(
-            "The Matrix",
-            "Inception",
-            "Interstellar",
-            "The Godfather",
-            "Pulp Fiction"
-    );
+    public MovieController(MovieService movieService) {
+        this.movieService = movieService;
+    }
 
     @GetMapping("/all")
-    public List<String> getAllMovies() {
-        return movies;
+    public ResponseEntity<List<Movie>> getAllMovies() {
+        return ResponseEntity.ok().body(movieService.findAllMovies());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Movie> getMovie(@PathVariable Long id) {
+        return ResponseEntity.ok().body(movieService.findMovieById(id));
+    }
+
+    @PostMapping("/")
+    public ResponseEntity<Movie>  createMovie(@RequestBody Movie movie) {
+        return ResponseEntity.ok().body(movieService.saveMovie(movie));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
+        return ResponseEntity.ok().body(movieService.saveMovie(movie));
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteMovie(@PathVariable Long id) {
+        movieService.deleteMovie(id);
+        ResponseEntity.noContent().build();
     }
 
 }
