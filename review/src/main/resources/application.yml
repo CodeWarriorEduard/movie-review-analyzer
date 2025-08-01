@@ -29,3 +29,12 @@ eureka:
   client:
     service-url:
       defaultZone: http://localhost:8082/eureka
+
+
+# service uris
+
+service:
+  user:
+    location: http://localhost:8083/api/users
+  movie:
+    location: http://localhost:8083/api/movies
