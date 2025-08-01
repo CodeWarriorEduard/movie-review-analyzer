@@ -37,4 +37,4 @@ service:
   user:
     location: http://localhost:8083/api/users
   movie:
-    location: http://localhost:8083/api/movies
+    location: http://localhost:8085/api/movies

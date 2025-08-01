@@ -18,11 +18,19 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<Review>> getAllReviews(@RequestBody PostReviewDTO postReviewDTO) {
-        return ResponseEntity.ok().body(reviewService.getReviewsByUserId(postReviewDTO));
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<Review>> getAllUserReviews(@PathVariable  Long userId) {
+        return ResponseEntity.ok().body(reviewService.getReviewsByUserId(userId));
     }
 
+    @PostMapping("/new")
+    public ResponseEntity<Review> createReview(@RequestBody PostReviewDTO review) {
+        return ResponseEntity.ok().body(reviewService.createReview(review));
+    }
 
+    @GetMapping("/all")
+    public ResponseEntity<List<Review>> getAllReviews() {
+        return ResponseEntity.ok().body(reviewService.getAll());
+    }
 
 }

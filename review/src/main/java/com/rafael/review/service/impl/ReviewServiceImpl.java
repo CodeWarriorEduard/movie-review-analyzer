@@ -1,8 +1,10 @@
 package com.rafael.review.service.impl;
 
+import com.rafael.review.dto.MovieDTO;
 import com.rafael.review.dto.PostReviewDTO;
 import com.rafael.review.dto.UserDTO;
 import com.rafael.review.entity.Review;
+import com.rafael.review.exception.MovieNotFoundException;
 import com.rafael.review.exception.ReviewNotFoundException;
 import com.rafael.review.exception.UserNotFoundException;
 import com.rafael.review.repository.ReviewRepository;
@@ -14,13 +16,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
 
 
     // Service uri
@@ -34,6 +39,23 @@ public class ReviewServiceImpl implements ReviewService {
         this.restTemplate = restTemplate;
     }
 
+
+    // Fetcher
+
+    public <T> T restRequests(String url, Class<T> tClass, RuntimeException exception){
+        T response = null;
+        try{
+            response = restTemplate.getForEntity(url, tClass).getBody();
+        }catch (HttpClientErrorException.NotFound e){
+            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)){
+                throw exception;
+            }
+        }
+
+        return response;
+
+    }
+
     @Override
     public List<Review> getReviewsByUserId(Long userId) {
         /*
@@ -41,13 +63,9 @@ public class ReviewServiceImpl implements ReviewService {
         * 2) Make a request to review_db and filter by this id if exists.
         * */
 
-        try{
-            restTemplate.getForEntity(userServiceLocation+"/"+userId, UserDTO.class);
-        }catch (HttpClientErrorException.NotFound e){
-            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)){
-                throw new UserNotFoundException("User not found");
-            }
-        }
+        String endpoint = userServiceLocation + "/"+userId;
+
+        restRequests(endpoint, UserDTO.class, new UserNotFoundException("User not found"));
 
         return reviewRepository.findAllByUserId(userId);
     }
@@ -67,19 +85,33 @@ public class ReviewServiceImpl implements ReviewService {
          * 2) Verify the movie we want to review exists
          * 3)
          */
+        // Make this global
 
-        try{ // Duplicated code, fix later
-            restTemplate.getForEntity(userServiceLocation+"/"+review.getUserId(), UserDTO.class);
-        }catch (HttpClientErrorException.NotFound e){
-            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)){
-                throw new UserNotFoundException("User not found");
-            }
-        }
+        System.out.println(review.toString());
+        String userEndpoint = userServiceLocation + "/"+review.getUserId();
+        String movieEndpoint = movieServiceLocation + "/"+review.getMovieId();
+
+        System.out.println(movieEndpoint);
+        restRequests(userEndpoint, UserDTO.class, new UserNotFoundException("User not found"));
+        restRequests(movieEndpoint, MovieDTO.class, new MovieNotFoundException("Movie not found"));
 
 
+        // If none of the exceptions are throwed we proceed to save the review
 
+        // Verify if there is a review by the same user on the same movie.
 
-        return null;
+        Review newReview = new Review();
+
+        // Date of review posting
+        LocalDateTime now = LocalDateTime.now();
+        newReview.setDate(Timestamp.valueOf(now));
+        newReview.setUserId(review.getUserId());
+        newReview.setMovieId(review.getMovieId());
+        newReview.setComment(review.getContent());
+
+        System.out.println(newReview.toString());
+
+        return reviewRepository.save(newReview);
     }
 
     @Override
@@ -90,5 +122,10 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public void deleteReviewById(Long reviewId) {
 
+    }
+
+    @Override
+    public List<Review> getAll() {
+        return reviewRepository.findAll();
     }
 }
